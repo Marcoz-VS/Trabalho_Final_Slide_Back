@@ -1,8 +1,6 @@
 import jwt from 'jsonwebtoken';
-import 'dotenv/config'
 
 const chaveSecreta = process.env.CHAVE_JWT
-
 
 export function AuthMiddleware(req, res, next){
     const authHeader = req.headers.authorization;
