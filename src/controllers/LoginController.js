@@ -1,6 +1,8 @@
-import Users from "../models/Usuarios";
+import Users from "../models/Usuarios.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+
+const chaveSecreta = process.env.CHAVE_JWT
 
 const LoginController = {
   login: async (req, res) => {
@@ -14,7 +16,7 @@ const LoginController = {
         });
       }
 
-      const resultado = await Usuario.findOne({ where: { email } });
+      const resultado = await Users.findOne({ where: { email } });
 
       if (!resultado) {
         return res.status(401).json({

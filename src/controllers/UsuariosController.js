@@ -1,4 +1,4 @@
-import Users from "../models/Usuarios.js"; // ✅ um import só, consistente
+import Users from "../models/Usuarios.js";
 
 const UsuariosController = {
   getAll: async (req, res) => {

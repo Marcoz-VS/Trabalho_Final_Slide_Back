@@ -1,4 +1,4 @@
-import Users from "../models/Usuarios";
+import Users from "../models/Usuarios.js";
 import bcrypt from "bcrypt";
 
 const RegisterController = {
