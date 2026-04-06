@@ -1,7 +1,7 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../db/DB.js";
 import Produtos from "./Produtos.js";
-import Users from "./Users.js";
+import Usuarios from "./Usuarios.js";
 
 const Reviews = sequelize.define("Reviews", {
     comments: {
@@ -15,10 +15,10 @@ const Reviews = sequelize.define("Reviews", {
     }
 });
 
-Produtos.hasMany(Reviews, { foreignKey: 'produtoId', onDelete: 'CASCADE' });
-Reviews.belongsTo(Produtos, { foreignKey: 'produtoId' });
+Produtos.hasMany(Reviews, { foreignKey: 'produtoId' , as: 'review', onDelete: 'CASCADE' });
+Reviews.belongsTo(Produtos, { foreignKey: 'produtoId', as: 'produto' });
 
-Users.hasMany(Reviews, { foreignKey: 'userId', onDelete: 'CASCADE' });
-Reviews.belongsTo(Users, { foreignKey: 'userId' });
+Usuarios.hasMany(Reviews, { foreignKey: 'userId', as: 'review', onDelete: 'CASCADE' });
+Reviews.belongsTo(Usuarios, { foreignKey: 'userId', as: 'usuario' });
 
 export default Reviews;

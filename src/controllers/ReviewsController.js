@@ -45,11 +45,14 @@ const ReviewsController = {
 
     create: async (req, res) => {
     try {
-      const { rate, comments } = req.body;
+      const userId = req.user.id
+      const { rate, comments, produtoId } = req.body;
 
       const resultado = await Reviews.create({
       rate,
-      comments
+      comments,
+      produtoId,
+      userId
       });
 
         if (!resultado) {
@@ -129,7 +132,7 @@ const ReviewsController = {
  getUsuarioByReview: async (req, res) => {
     try{ 
     const { id } = req.params;
-    const resultado = await Reviews.findByPk(id, {include: 'usuarios'});
+    const resultado = await Reviews.findByPk(id, {include:{ association: 'usuario', attributes: {exclude: ["password"] }}});
 
        if (!resultado) {
         return res.status(404).json({
@@ -148,10 +151,10 @@ const ReviewsController = {
     }
  },
 
- getProductsByReview: async (req, res) => {
+ getProdutoByReview: async (req, res) => {
     try{
     const { id } = req.params;
-    const resultado = await Reviews.findByPk(id, {include: 'products'});
+    const resultado = await Reviews.findByPk(id, {include: 'produto'});
 
        if (!resultado) {
         return res.status(404).json({

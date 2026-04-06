@@ -88,6 +88,28 @@ const UsuariosController = {
       res.status(500).json({ error: error.message });
     }
   },
+
+  getUsuariosReviews: async (req,res) => { 
+  try{
+    const { id } = req.params;
+    const resultado = await Users.findByPk(id, {include:{ association: 'review'}, attributes: {exclude: ["password"] }});
+
+       if (!resultado) {
+        return res.status(404).json({
+          success: false,
+          message: "Falha ao encontrar as Reviews do Usuario",
+        });
+      }
+
+        res.status(200).json({
+        success: true,
+        data: resultado,
+        message: "Reviews do Usuario acessado com sucesso!",
+      });
+  }catch(error){
+  res.status(500).json({ error: error.message });
+  }
+ }
 };
 
 export default UsuariosController;

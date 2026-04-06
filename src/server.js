@@ -6,6 +6,8 @@ import LoginRouter from "./routes/LoginRoutes.js";
 import RegisterRouter from "./routes/RegisterRoutes.js";
 import UsuariosRouter from "./routes/UsuariosRoutes.js";
 import MarcasRouter from "./routes/MarcasRoutes.js"
+import ReviewsRouter from "./routes/ReviewsRoutes.js";
+import ProdutosRouter from "./routes/ProdutosRoutes.js";
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -29,6 +31,10 @@ app.use("/register", RegisterRouter);
 app.use("/usuarios", UsuariosRouter);
 
 app.use("/marcas", MarcasRouter);
+
+app.use("/reviews", ReviewsRouter)
+
+app.use("/products", ProdutosRouter)
 
 app.listen(PORT, async () => {
   await connect();

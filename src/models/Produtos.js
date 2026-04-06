@@ -17,7 +17,7 @@ const Produtos = sequelize.define("Produtos", {
     }
 });
 
-Marcas.hasMany(Produtos, { foreignKey: 'marcaId' });
-Produtos.belongsTo(Marcas, { foreignKey: 'marcaId' });
+Marcas.hasMany(Produtos, { foreignKey: 'marcaId', as: 'produtos' });
+Produtos.belongsTo(Marcas, { foreignKey: 'marcaId', as: 'marca' });
 
 export default Produtos;

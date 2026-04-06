@@ -1,5 +1,6 @@
 import Produtos from "../models/Produtos.js";
-import { Op } from 'sequelize'
+import { Op } from 'sequelize';
+import Reviews from '../models/Reviews.js'
 
 const productController = {
   getAll: async (req, res) => {
@@ -70,7 +71,7 @@ const productController = {
     try {
       const { name, price, storage, marcaId } = req.body;
 
-      const resultado = await Product.create({
+      const resultado = await Produtos.create({
         name,
         price,
         marcaId,
@@ -181,7 +182,7 @@ const productController = {
   getProductsReview: async (req, res) => {
     try{
     const { id } = req.params;
-    const resultado = await Produtos.findByPk(id, {include: 'reviews'});
+    const resultado = await Produtos.findByPk(id, {include: 'review'});
 
        if (!resultado) {
         return res.status(404).json({
