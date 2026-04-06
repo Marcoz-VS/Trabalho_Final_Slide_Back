@@ -1,4 +1,4 @@
-import Product from "../models/Product.js";
+import Produtos from "../models/Produtos.js";
 import { Op } from 'sequelize'
 
 const productController = {
@@ -18,7 +18,7 @@ const productController = {
 
       console.log(where)
 
-      const resultado = await Product.findAll({
+      const resultado = await Produtos.findAll({
         where,
         order: [["price", order === "desc" ? "DESC" : "ASC"]]
       });
@@ -45,7 +45,7 @@ const productController = {
   getById: async (req, res) => {
     try {
       const { id } = req.params;
-      const resultado = await Product.findByPk(id);
+      const resultado = await Produtos.findByPk(id);
 
         if (!resultado) {
         return res.status(404).json({
@@ -68,12 +68,13 @@ const productController = {
 
   create: async (req, res) => {
     try {
-      const { name, price, marcaId } = req.body;
+      const { name, price, storage, marcaId } = req.body;
 
       const resultado = await Product.create({
         name,
         price,
         marcaId,
+        storage
       });
 
         if (!resultado) {
@@ -100,12 +101,13 @@ const productController = {
   update: async (req, res) => {
     try {
       const { id } = req.params;
-      const { name, price, marcaId } = req.body;
-      const [atualizado] = await Product.update(
+      const { name, price, storage, marcaId } = req.body;
+      const [atualizado] = await Produtos.update(
         {
           name,
           price,
           marcaId,
+          storage
         },
         {
           where: { id },
@@ -134,7 +136,7 @@ const productController = {
   delete: async (req, res) => {
     try {
       const { id } = req.params;
-      const deletado = await Product.destroy({ where: { id } });
+      const deletado = await Produtos.destroy({ where: { id } });
 
       if (!deletado) {
         return res.status(404).json({
@@ -152,6 +154,51 @@ const productController = {
       res.status(500).json({ error: error.message });
     }
   },
+
+  getMarcaProduct: async (req, res) => {
+    try{
+    const { id } = req.params;
+    const resultado = await Produtos.findByPk(id, {include: 'marca'});
+
+       if (!resultado) {
+        return res.status(404).json({
+          success: false,
+          message: "Falha ao encontrar a marca do Produto",
+        });
+      }
+
+        res.status(200).json({
+        success: true,
+        data: resultado,
+        message: "Marca do produto puxada com sucesso!",
+      });
+  
+    } catch(error){
+      res.status(500).json({ error: error.message });
+    }
+  },
+
+  getProductsReview: async (req, res) => {
+    try{
+    const { id } = req.params;
+    const resultado = await Produtos.findByPk(id, {include: 'reviews'});
+
+       if (!resultado) {
+        return res.status(404).json({
+          success: false,
+          message: "Falha ao encontrar Reviews do Produto",
+        });
+      }
+
+        res.status(200).json({
+        success: true,
+        data: resultado,
+        message: "Reviews do produto puxado com sucesso!",
+      });
+    }catch(error){
+      res.status(500).json({ error: error.message });
+    }
+  }
 };
 
 export default productController;
