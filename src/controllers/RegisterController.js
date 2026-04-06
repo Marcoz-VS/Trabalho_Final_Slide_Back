@@ -4,7 +4,7 @@ import bcrypt from "bcrypt";
 const RegisterController = {
   register: async (req, res) => {
     try {
-      const { name, email, password, cpf } = req.body;
+      const { name, email, password, cpf, role } = req.body;
 
       if (
         !name?.trim() ||
@@ -25,7 +25,7 @@ const RegisterController = {
         email,
         cpf,
         password: hash,
-        role: "client",
+        role: role || "client",
       });
 
       const { password: _, ...usuarioSemSenha } = resultado.toJSON();
