@@ -1,4 +1,5 @@
 import Marcas from "../models/Marcas.js";
+import Produtos from "../models/Produtos.js";
 
 const MarcasController = {
   getAll: async (req, res) => {
@@ -28,6 +29,23 @@ const MarcasController = {
     }
   },
 
+  getMarcasProducts: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const resultado = await Marcas.findByPk(id, { include: "products" });
+
+      if (!resultado) {
+        return res
+          .status(404)
+          .json({ success: false, message: "Marca não encontrada" });
+      }
+
+      res.status(200).json({ success: true, data: resultado });
+    } catch(error) {
+      res.status(500).json({ error: error.message });
+    }
+  },
+
   create: async (req, res) => {
     try {
       const { name, yearCreate, phoneNumber } = req.body;
@@ -50,7 +68,7 @@ const MarcasController = {
         message: "marca criada com sucesso!",
         data: resultado,
       });
-    } catch {
+    } catch(error) {
       res.status(500).json({ error: error.message });
     }
   },

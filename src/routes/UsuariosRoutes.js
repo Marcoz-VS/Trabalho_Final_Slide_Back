@@ -1,6 +1,7 @@
 import express from 'express'
 import UsuariosController from '../controllers/UsuariosController.js'
 import { AuthMiddleware } from '../middlewares/AuthMiddleware.js';
+import { RoleMiddleware } from '../middlewares/RoleMiddleware.js';
 
 const UsuariosRouter = express.Router();
 UsuariosRouter.use(AuthMiddleware);

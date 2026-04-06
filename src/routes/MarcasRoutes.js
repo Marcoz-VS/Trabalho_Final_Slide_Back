@@ -8,9 +8,9 @@ MarcasRouter.use(AuthMiddleware);
 
 MarcasRouter.get('/',MarcasController.getAll);
 MarcasRouter.get('/:id', MarcasController.getById);
-MarcasRouter.post('/', RoleMiddleware("mod"), MarcasController.create);
+MarcasRouter.post('/', RoleMiddleware("admin"), MarcasController.create);
 MarcasRouter.put('/:id', RoleMiddleware("mod"), MarcasController.update);
-MarcasRouter.delete('/:id', RoleMiddleware("mod"), MarcasController.delete);
-//MarcasRouter.get('/:id/produtos', MarcasController.getMarcasProducts);
+MarcasRouter.delete('/:id', RoleMiddleware("admin"), MarcasController.delete);
+MarcasRouter.get('/:id/produtos', MarcasController.getMarcasProducts);
 
 export default MarcasRouter;
