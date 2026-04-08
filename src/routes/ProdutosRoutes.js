@@ -1,7 +1,9 @@
 import express from 'express'
 import ProdutosController from '../controllers/ProdutosController.js'
+import { AuthMiddleware } from '../middlewares/AuthMiddleware.js';
 
 const ProdutosRouter = express.Router();
+ProdutosRouter.use(AuthMiddleware);
 
 ProdutosRouter.get('/', ProdutosController.getAll);
 ProdutosRouter.get('/:id', ProdutosController.getById);
