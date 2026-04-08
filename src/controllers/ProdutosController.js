@@ -1,99 +1,73 @@
 import Produtos from "../models/Produtos.js";
 import { Op } from 'sequelize';
-import Reviews from '../models/Reviews.js'
+import Joi from "joi";
+
+const schema = Joi.object({
+  name: Joi.string().min(2).max(255).trim().required(),
+  price: Joi.number().positive().required(),
+  storage: Joi.number().integer().min(0).default(0),
+  marcaId: Joi.number().integer().required()
+});
+
+const querySchema = Joi.object({
+  marca: Joi.number().integer(),
+  minPrice: Joi.number().min(0),
+  maxPrice: Joi.number().min(0),
+  order: Joi.string().valid('asc', 'desc').default('asc')
+});
+
+const idSchema = Joi.object({
+  id: Joi.number().integer().required()
+});
 
 const productController = {
   getAll: async (req, res) => {
     try {
+      const { error, value } = querySchema.validate(req.query);
+      if (error) return res.status(400).json({ success: false, message: "Filtros inválidos" });
 
-      const {marca, minPrice, maxPrice, order} = req.query;
+      const { marca, minPrice, maxPrice, order } = value;
       const where = {};
       
       if (marca) where.marcaId = marca;
-
       if (minPrice || maxPrice) {
-       where.price = {};
-       if (minPrice) where.price[Op.gte] = Number(minPrice);
-       if (maxPrice) where.price[Op.lte] = Number(maxPrice);
+        where.price = {};
+        if (minPrice) where.price[Op.gte] = minPrice;
+        if (maxPrice) where.price[Op.lte] = maxPrice;
       }
-
-      console.log(where)
 
       const resultado = await Produtos.findAll({
         where,
-        order: [["price", order === "desc" ? "DESC" : "ASC"]]
+        order: [["price", order.toUpperCase()]]
       });
 
-            if (!resultado) {
-        return res.status(404).json({
-          success: false,
-          message: "Produto não encontrado",
-        });
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "Produtos puxados com sucesso com sucesso!",
-        data: resultado,
-      });
-
+      res.status(200).json({ success: true, data: resultado });
     } catch (error) {
       res.status(500).json({ error: error.message });
-
     }
   },
 
   getById: async (req, res) => {
     try {
-      const { id } = req.params;
-      const resultado = await Produtos.findByPk(id);
+      const { error } = idSchema.validate(req.params);
+      if (error) return res.status(400).json({ success: false, message: "ID inválido" });
 
-        if (!resultado) {
-        return res.status(404).json({
-          success: false,
-          message: "Produto não encontrado",
-        });
-      }
+      const resultado = await Produtos.findByPk(req.params.id);
+      if (!resultado) return res.status(404).json({ success: false, message: "Produto não encontrado" });
 
-      res.status(200).json({
-        success: true,
-        message: "Produto puxado com sucesso!",
-        data: resultado,
-      });
-
+      res.status(200).json({ success: true, data: resultado });
     } catch (error) {
       res.status(500).json({ error: error.message });
-
     }
   },
 
   create: async (req, res) => {
     try {
-      const { name, price, storage, marcaId } = req.body;
+      const { error, value } = schema.validate(req.body);
+      if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
-      const resultado = await Produtos.create({
-        name,
-        price,
-        marcaId,
-        storage
-      });
-
-        if (!resultado) {
-        return res.status(404).json({
-          success: false,
-          message: "Produto não encontrado",
-        });
-      }
-
-      if  (!name.trim('')) {
-        return res.status(400).json({ success: false, message: "você precisa preencher todos os campos" });
-      }
-
-      res.status(201).json({
-        success: true,
-        message: "Produtos criados com sucesso!",
-        data: resultado,
-      });
+      const resultado = await Produtos.create(value);
+      res.status(201).json({ success: true, message: "Produto criado!", data: resultado });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -101,34 +75,14 @@ const productController = {
 
   update: async (req, res) => {
     try {
-      const { id } = req.params;
-      const { name, price, storage, marcaId } = req.body;
-      const [atualizado] = await Produtos.update(
-        {
-          name,
-          price,
-          marcaId,
-          storage
-        },
-        {
-          where: { id },
-        },
-      );
+      const { error: idErr } = idSchema.validate(req.params);
+      const { error, value } = schema.validate(req.body);
+      if (idErr || error) return res.status(400).json({ success: false, message: "Dados inválidos" });
 
-      if (!atualizado) {
-        return res.status(404).json({ success: false, message: "Produto não encontrado" });
-      }
+      const [atualizado] = await Produtos.update(value, { where: { id: req.params.id } });
+      if (!atualizado) return res.status(404).json({ success: false, message: "Produto não encontrado" });
 
-        if  (!name.trim('')) {
-        return res.status(400).json({ success: false, message: "você precisa preencher todos os campos" });
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "Produtos atualizados com sucesso!",
-        data: atualizado
-      });
-
+      res.status(200).json({ success: true, message: "Produto atualizado!" });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -136,67 +90,34 @@ const productController = {
 
   delete: async (req, res) => {
     try {
-      const { id } = req.params;
-      const deletado = await Produtos.destroy({ where: { id } });
+      const { error } = idSchema.validate(req.params);
+      if (error) return res.status(400).json({ success: false, message: "ID inválido" });
 
-      if (!deletado) {
-        return res.status(404).json({
-          success: false,
-          message: "Produto não encontrado",
-        });
-      }
+      const deletado = await Produtos.destroy({ where: { id: req.params.id } });
+      if (!deletado) return res.status(404).json({ success: false, message: "Produto não encontrado" });
 
-      res.status(200).json({
-        success: true,
-        message: "Produto deletado com sucesso!",
-        data: deletado,
-      });
+      res.status(200).json({ success: true, message: "Produto deletado!" });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
 
   getMarcaProduct: async (req, res) => {
-    try{
-    const { id } = req.params;
-    const resultado = await Produtos.findByPk(id, {include: 'marca'});
-
-       if (!resultado) {
-        return res.status(404).json({
-          success: false,
-          message: "Falha ao encontrar a marca do Produto",
-        });
-      }
-
-        res.status(200).json({
-        success: true,
-        data: resultado,
-        message: "Marca do produto puxada com sucesso!",
-      });
-  
+    try {
+      const resultado = await Produtos.findByPk(req.params.id, { include: 'marca' });
+      if (!resultado) return res.status(404).json({ success: false, message: "Não encontrado" });
+      res.status(200).json({ success: true, data: resultado });
     } catch(error){
       res.status(500).json({ error: error.message });
     }
   },
 
   getProductsReview: async (req, res) => {
-    try{
-    const { id } = req.params;
-    const resultado = await Produtos.findByPk(id, {include: 'review'});
-
-       if (!resultado) {
-        return res.status(404).json({
-          success: false,
-          message: "Falha ao encontrar Reviews do Produto",
-        });
-      }
-
-        res.status(200).json({
-        success: true,
-        data: resultado,
-        message: "Reviews do produto puxado com sucesso!",
-      });
-    }catch(error){
+    try {
+      const resultado = await Produtos.findByPk(req.params.id, { include: 'review' });
+      if (!resultado) return res.status(404).json({ success: false, message: "Não encontrado" });
+      res.status(200).json({ success: true, data: resultado });
+    } catch(error){
       res.status(500).json({ error: error.message });
     }
   }
