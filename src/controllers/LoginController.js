@@ -1,20 +1,29 @@
 import Users from "../models/Usuarios.js";
 import bcrypt from "bcrypt";
 import jwt from "jsonwebtoken";
+import Joi from "joi";
 
-const chaveSecreta = process.env.CHAVE_JWT
+const chaveSecreta = process.env.CHAVE_JWT;
+
+const schema = Joi.object({
+  email: Joi.string().email().required(),
+  password: Joi.string().required()
+});
 
 const LoginController = {
   login: async (req, res) => {
     try {
-      const { email, password } = req.body;
+      const { error, value } = schema.validate(req.body, { abortEarly: false });
 
-      if (!email?.trim() || !password?.trim()) {
+      if (error) {
         return res.status(400).json({
           success: false,
-          message: "Email e senha são obrigatórios",
+          message: "Dados de login inválidos",
+          errors: error.details.map(detail => detail.message)
         });
       }
+
+      const { email, password } = value;
 
       const resultado = await Users.findOne({ where: { email } });
 

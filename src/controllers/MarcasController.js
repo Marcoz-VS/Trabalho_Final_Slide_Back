@@ -1,11 +1,20 @@
 import Marcas from "../models/Marcas.js";
-import Produtos from "../models/Produtos.js";
+import Joi from "joi";
+
+const schema = Joi.object({
+  name: Joi.string().min(2).max(255).trim().required(),
+  yearCreate: Joi.date().iso().required(),
+  phoneNumber: Joi.string().min(8).trim().required()
+});
+
+const idSchema = Joi.object({
+  id: Joi.number().integer().required()
+});
 
 const MarcasController = {
   getAll: async (req, res) => {
     try {
       const resultado = await Marcas.findAll();
-
       res.status(200).json({ success: true, data: resultado });
     } catch (error) {
       res.status(500).json({ error: error.message });
@@ -14,14 +23,11 @@ const MarcasController = {
 
   getById: async (req, res) => {
     try {
-      const { id } = req.params;
-      const resultado = await Marcas.findByPk(id);
+      const { error } = idSchema.validate(req.params);
+      if (error) return res.status(400).json({ success: false, message: "ID inválido" });
 
-      if (!resultado) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Marca não encontrada" });
-      }
+      const resultado = await Marcas.findByPk(req.params.id);
+      if (!resultado) return res.status(404).json({ success: false, message: "Marca não encontrada" });
 
       res.status(200).json({ success: true, data: resultado });
     } catch (error) {
@@ -31,14 +37,11 @@ const MarcasController = {
 
   getMarcasProducts: async (req, res) => {
     try {
-      const { id } = req.params;
-      const resultado = await Marcas.findByPk(id, { include: "products" });
+      const { error } = idSchema.validate(req.params);
+      if (error) return res.status(400).json({ success: false, message: "ID inválido" });
 
-      if (!resultado) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Marca não encontrada" });
-      }
+      const resultado = await Marcas.findByPk(req.params.id, { include: "produtos" });
+      if (!resultado) return res.status(404).json({ success: false, message: "Marca não encontrada" });
 
       res.status(200).json({ success: true, data: resultado });
     } catch(error) {
@@ -48,26 +51,11 @@ const MarcasController = {
 
   create: async (req, res) => {
     try {
-      const { name, yearCreate, phoneNumber } = req.body;
+      const { error, value } = schema.validate(req.body);
+      if (error) return res.status(400).json({ success: false, message: error.details[0].message });
 
-      if (!name?.trim() || !yearCreate?.trim() || !phoneNumber?.trim()) {
-        return res.status(400).json({
-          success: false,
-          message: "Preencha todos os campos",
-        });
-      }
-
-      const resultado = await Marcas.create({
-        name,
-        yearCreate,
-        phoneNumber,
-      });
-
-      res.status(201).json({
-        success: true,
-        message: "marca criada com sucesso!",
-        data: resultado,
-      });
+      const resultado = await Marcas.create(value);
+      res.status(201).json({ success: true, message: "Marca criada!", data: resultado });
     } catch(error) {
       res.status(500).json({ error: error.message });
     }
@@ -75,30 +63,14 @@ const MarcasController = {
 
   update: async (req, res) => {
     try {
-      const { id } = req.params;
-      const { name, yearCreate, phoneNumber } = req.body;
+      const { error: idErr } = idSchema.validate(req.params);
+      const { error, value } = schema.validate(req.body);
+      if (idErr || error) return res.status(400).json({ success: false, message: "Dados inválidos" });
 
-      if (!name?.trim() || !yearCreate?.trim() || !phoneNumber?.trim()) {
-        return res.status(400).json({
-          success: false,
-          message: "Preencha todos os campos",
-        });
-      }
+      const [atualizado] = await Marcas.update(value, { where: { id: req.params.id } });
+      if (!atualizado) return res.status(404).json({ success: false, message: "Marca não encontrada" });
 
-      const [atualizado] = await Marcas.update(
-        { name, phoneNumber, yearCreate },
-        { where: { id } },
-      );
-
-      if (!atualizado) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Marca não encontrada" });
-      }
-
-      res
-        .status(200)
-        .json({ success: true, message: "Marca atualizada com sucesso!" });
+      res.status(200).json({ success: true, message: "Marca atualizada!" });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -106,22 +78,17 @@ const MarcasController = {
 
   delete: async (req, res) => {
     try {
-      const { id } = req.params;
-      const deletado = await Marcas.destroy({ where: { id } });
+      const { error } = idSchema.validate(req.params);
+      if (error) return res.status(400).json({ success: false, message: "ID inválido" });
 
-      if (!deletado) {
-        return res
-          .status(404)
-          .json({ success: false, message: "Marca não encontrada" });
-      }
+      const deletado = await Marcas.destroy({ where: { id: req.params.id } });
+      if (!deletado) return res.status(404).json({ success: false, message: "Marca não encontrada" });
 
-      res
-        .status(200)
-        .json({ success: true, message: "Marca deletada com sucesso!" });
+      res.status(200).json({ success: true, message: "Marca deletada!" });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
-  },
+  }
 };
 
 export default MarcasController;

@@ -8,7 +8,7 @@ UsuariosRouter.use(AuthMiddleware);
 
 UsuariosRouter.get('/', UsuariosController.getAll);
 UsuariosRouter.get('/:id', UsuariosController.getById);
-UsuariosRouter.put('/:id', RoleMiddleware("mod"), UsuariosController.update);
+UsuariosRouter.put('/:id', RoleMiddleware("admin"), UsuariosController.update);
 UsuariosRouter.delete('/:id', RoleMiddleware("mod"), UsuariosController.delete);
 UsuariosRouter.get('/:id/reviews', UsuariosController.getUsuariosReviews);
 

@@ -1,70 +1,64 @@
-import Reviews from '../models/Reviews.js'
+import Reviews from '../models/Reviews.js';
+import Joi from "joi";
+
+const schema = Joi.object({
+  rate: Joi.number().min(1).max(5).required(),
+  comments: Joi.string().min(5).max(500).trim().required(),
+  produtoId: Joi.number().integer(),
+});
+
+const idSchema = Joi.object({
+  id: Joi.number().integer().required()
+});
 
 const ReviewsController = {
-    getAll: async (req,res) => {
-    try{
-     const resultado = await Reviews.findAll();
-
-  if (!resultado) {
-        return res.status(404).json({
-          success: false,
-          message: "Reviews não encontrados",
-        });
-      }
-
+  getAll: async (req, res) => {
+    try {
+      const resultado = await Reviews.findAll();
       res.status(200).json({
         success: true,
         data: resultado,
         message: "Reviews puxados com sucesso!"
-    })} catch(error){
-    res.status(500).json({ error: error.message });
+      });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
   },
-  getById: async (req,res) => {
-    try{
-    const {id} = req.params
-    const resultado = await Reviews.findByPk(id)
 
-    if (!resultado) {
-        return res.status(404).json({
-          success: false,
-          message: "Review não encontrado",
-        });
+  getById: async (req, res) => {
+    try {
+      const { error } = idSchema.validate(req.params);
+      if (error) return res.status(400).json({ success: false, message: "ID inválido" });
+
+      const { id } = req.params;
+      const resultado = await Reviews.findByPk(id);
+
+      if (!resultado) {
+        return res.status(404).json({ success: false, message: "Review não encontrado" });
       }
 
-    res.status(200).json({
-        success: true,
-        message: "Review puxado com sucesso!",
-        data: resultado,
-      });
-
-    } catch(error){
-    res.status(500).json({ error: error.message });
+      res.status(200).json({ success: true, data: resultado });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
   },
 
-    create: async (req, res) => {
+  create: async (req, res) => {
     try {
-      const userId = req.user.id
-      const { rate, comments, produtoId } = req.body;
+      const { error, value } = schema.validate(req.body);
+      if (error) {
+        return res.status(400).json({ success: false, message: error.details[0].message });
+      }
+
+      const userId = req.user.id;
+      const { rate, comments, produtoId } = value;
 
       const resultado = await Reviews.create({
-      rate,
-      comments,
-      produtoId,
-      userId
+        rate,
+        comments,
+        produtoId,
+        userId
       });
-
-        if (!resultado) {
-        return res.status(404).json({
-          success: false,
-          message: "Não foi possivel criar Review",
-        });
-      }
-
-      if  (!comments.trim('')) {
-        return res.status(400).json({ success: false, message: "você precisa comentar brevemente" });
-      }
 
       res.status(201).json({
         success: true,
@@ -78,100 +72,72 @@ const ReviewsController = {
 
   update: async (req, res) => {
     try {
+      const { error: idErr } = idSchema.validate(req.params);
+      const { error, value } = schema.validate(req.body);
+      
+      if (idErr || error) {
+        return res.status(400).json({ success: false, message: "Dados inválidos" });
+      }
+
       const { id } = req.params;
-      const { rate, comments } = req.body;
+      const { rate, comments } = value;
+
       const [atualizado] = await Reviews.update(
-        {
-          rate,
-          comments
-        },
-        {
-          where: { id },
-        },
+        { rate, comments },
+        { where: { id } }
       );
 
       if (!atualizado) {
         return res.status(404).json({ success: false, message: "Review não encontrado" });
       }
 
-        if  (!comments.trim('')) {
-        return res.status(400).json({ success: false, message: "você precisa fazer um novo comentário" });
-      }
-
-      res.status(200).json({
-        success: true,
-        message: "Reviews atualizados com sucesso!",
-        data: atualizado
-      });
-
+      res.status(200).json({ success: true, message: "Review atualizado!" });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
   },
 
   delete: async (req, res) => {
-    const {id} = req.params
-    const deletado = await Reviews.destroy({
-        where: {id}
-    });
+    try {
+      const { error } = idSchema.validate(req.params);
+      if (error) return res.status(400).json({ success: false, message: "ID inválido" });
 
-    if (!deletado) {
-        return res.status(404).json({
-          success: false,
-          message: "Falha ao deletar Review",
-        });
+      const { id } = req.params;
+      const deletado = await Reviews.destroy({ where: { id } });
+
+      if (!deletado) {
+        return res.status(404).json({ success: false, message: "Review não encontrado" });
       }
 
-        res.status(200).json({
-        success: true,
-        message: "Review deletado com sucesso!",
-        data: deletado,
-  })
- },
-
- getUsuarioByReview: async (req, res) => {
-    try{ 
-    const { id } = req.params;
-    const resultado = await Reviews.findByPk(id, {include:{ association: 'usuario', attributes: {exclude: ["password"] }}});
-
-       if (!resultado) {
-        return res.status(404).json({
-          success: false,
-          message: "Falha ao encontrar a Usuario que fez a Review",
-        });
-      }
-
-        res.status(200).json({
-        success: true,
-        data: resultado,
-        message: "Usuario encontrado com sucesso!",
-      });
-    }catch(error){
-    res.status(500).json({ error: error.message });
+      res.status(200).json({ success: true, message: "Deletado com sucesso!" });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
- },
+  },
 
- getProdutoByReview: async (req, res) => {
-    try{
-    const { id } = req.params;
-    const resultado = await Reviews.findByPk(id, {include: 'produto'});
-
-       if (!resultado) {
-        return res.status(404).json({
-          success: false,
-          message: "Falha ao encontrar a Produto da Review",
-        });
-      }
-
-        res.status(200).json({
-        success: true,
-        data: resultado,
-        message: "Produto acessado com sucesso!",
+  getUsuarioByReview: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const resultado = await Reviews.findByPk(id, {
+        include: { association: 'usuario', attributes: { exclude: ["password"] } }
       });
-    }catch(error){
-    res.status(500).json({ error: error.message });
+      if (!resultado) return res.status(404).json({ success: false, message: "Não encontrado" });
+      res.status(200).json({ success: true, data: resultado });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
     }
- }
-}
+  },
 
-export default ReviewsController
+  getProdutoByReview: async (req, res) => {
+    try {
+      const { id } = req.params;
+      const resultado = await Reviews.findByPk(id, { include: 'produto' });
+      if (!resultado) return res.status(404).json({ success: false, message: "Não encontrado" });
+      res.status(200).json({ success: true, data: resultado });
+    } catch (error) {
+      res.status(500).json({ error: error.message });
+    }
+  }
+};
+
+export default ReviewsController;
