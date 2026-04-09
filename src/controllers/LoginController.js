@@ -27,7 +27,7 @@ const LoginController = {
       const { email, password } = value;
       const resultado = await Users.findOne({ where: { email } });
 
-      // Mensagem genérica para evitar "User Enumeration"
+
       if (!resultado || !(await bcrypt.compare(password, resultado.password))) {
         return res.status(401).json({
           success: false,
@@ -41,7 +41,9 @@ const LoginController = {
         { expiresIn: "2h" },
       );
 
-      res.status(200).json({ success: true, message: "Login realizado com sucesso!", token });
+
+      res.status(200).json({ success: true, message: "Login realizado com sucesso!", token, user:{ id:resultado.id, name:resultado.name, email: resultado.email, role: resultado.role} });
+
     } catch (error) {
       res.status(500).json({ success: false, message: "Erro ao tentar realizar login." });
     }

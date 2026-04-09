@@ -1,6 +1,7 @@
 import Produtos from "../models/Produtos.js";
 import { Op } from 'sequelize';
 import Joi from "joi";
+import Marcas from '../models/Marcas.js'
 
 const schema = Joi.object({
   name: Joi.string().min(2).max(255).trim().required(),
@@ -38,6 +39,10 @@ const productController = {
 
       const resultado = await Produtos.findAll({
         where,
+        include: {
+        model: Marcas,
+        as: "marca"
+  },
         order: [["price", order.toUpperCase()]]
       });
 
