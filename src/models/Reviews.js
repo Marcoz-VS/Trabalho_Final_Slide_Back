@@ -6,7 +6,7 @@ import Usuarios from "./Usuarios.js";
 const Reviews = sequelize.define("Reviews", {
     comments: {
         type: DataTypes.TEXT,
-        allowNull: false
+        allowNull: true
     },
     rate: {
         type: DataTypes.INTEGER,
