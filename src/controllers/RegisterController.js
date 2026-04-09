@@ -3,12 +3,29 @@ import bcrypt from "bcrypt";
 import Joi from "joi";
 
 const schema = Joi.object({
-  name: Joi.string().min(3).max(255).required(),
-  email: Joi.string().email().required(),
-  password: Joi.string().pattern(/^[a-zA-Z0-9]{3,30}$/).required(),
-  cpf: Joi.string().pattern(/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/).required(),
-  role: Joi.string().valid('client', 'admin', 'mod').default('client')
-})
+  name: Joi.string().min(3).max(255).required().messages({
+    "string.min": "O nome deve ter pelo menos 3 caracteres.",
+    "any.required": "O nome é obrigatório.",
+  }),
+  email: Joi.string().email().required().messages({
+    "string.email": "Informe um e-mail válido.",
+    "any.required": "O e-mail é obrigatório.",
+  }),
+  password: Joi.string()
+    .pattern(/^[a-zA-Z0-9]{3,30}$/)
+    .required()
+    .messages({
+      "string.pattern.base":
+        "A senha deve conter entre 3 e 30 caracteres alfanuméricos.",
+    }),
+  cpf: Joi.string()
+    .pattern(/^\d{3}\.?\d{3}\.?\d{3}-?\d{2}$/)
+    .required()
+    .messages({
+      "string.pattern.base": "CPF em formato inválido.",
+    }),
+  role: Joi.string().valid("client", "admin", "mod").default("client"),
+});
 
 const RegisterController = {
   register: async (req, res) => {
@@ -19,7 +36,7 @@ const RegisterController = {
         return res.status(400).json({
           success: false,
           message: "Dados inválidos",
-          errors: error.details.map(detail => detail.message)
+          errors: error.details.map((detail) => detail.message),
         });
       }
 
@@ -32,7 +49,7 @@ const RegisterController = {
         email,
         cpf,
         password: hash,
-        role
+        role,
       });
 
       const { password: _, ...usuarioSemSenha } = resultado.toJSON();
@@ -43,7 +60,18 @@ const RegisterController = {
         data: usuarioSemSenha,
       });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      if (error.name === "SequelizeUniqueConstraintError") {
+        return res.status(409).json({
+          success: false,
+          message: "E-mail ou CPF já cadastrado no sistema.",
+        });
+      }
+      res
+        .status(500)
+        .json({
+          success: false,
+          message: "Erro interno ao processar o cadastro.",
+        });
     }
   },
 };

@@ -8,6 +8,7 @@ import UsuariosRouter from "./routes/UsuariosRoutes.js";
 import MarcasRouter from "./routes/MarcasRoutes.js"
 import ReviewsRouter from "./routes/ReviewsRoutes.js";
 import ProdutosRouter from "./routes/ProdutosRoutes.js";
+import CarrinhoRouter from "./routes/CarrinhoRoutes.js";
 
 const PORT = process.env.PORT || 3000;
 const app = express();
@@ -35,6 +36,8 @@ app.use("/marcas", MarcasRouter);
 app.use("/reviews", ReviewsRouter)
 
 app.use("/products", ProdutosRouter)
+
+app.use("/carrinho", CarrinhoRouter);
 
 app.listen(PORT, async () => {
   await connect();

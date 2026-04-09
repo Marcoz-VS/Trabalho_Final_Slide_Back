@@ -10,6 +10,7 @@ const schema = Joi.object({
   password: Joi.string().required()
 });
 
+// No Login, é uma boa prática de segurança NÃO dizer se o que errou foi o e-mail ou a senha
 const LoginController = {
   login: async (req, res) => {
     try {
@@ -18,28 +19,19 @@ const LoginController = {
       if (error) {
         return res.status(400).json({
           success: false,
-          message: "Dados de login inválidos",
+          message: "Preencha os campos de login corretamente.",
           errors: error.details.map(detail => detail.message)
         });
       }
 
       const { email, password } = value;
-
       const resultado = await Users.findOne({ where: { email } });
 
-      if (!resultado) {
+      // Mensagem genérica para evitar "User Enumeration"
+      if (!resultado || !(await bcrypt.compare(password, resultado.password))) {
         return res.status(401).json({
           success: false,
-          message: "Credenciais inválidas",
-        });
-      }
-
-      const hashCompare = await bcrypt.compare(password, resultado.password);
-
-      if (!hashCompare) {
-        return res.status(401).json({
-          success: false,
-          message: "Credenciais inválidas",
+          message: "E-mail ou senha incorretos.",
         });
       }
 
@@ -49,9 +41,9 @@ const LoginController = {
         { expiresIn: "2h" },
       );
 
-      res.status(200).json({ success: true, token });
+      res.status(200).json({ success: true, message: "Login realizado com sucesso!", token });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ success: false, message: "Erro ao tentar realizar login." });
     }
   },
 };
