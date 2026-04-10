@@ -10,7 +10,6 @@ const schema = Joi.object({
   password: Joi.string().required()
 });
 
-// No Login, é uma boa prática de segurança NÃO dizer se o que errou foi o e-mail ou a senha
 const LoginController = {
   login: async (req, res) => {
     try {

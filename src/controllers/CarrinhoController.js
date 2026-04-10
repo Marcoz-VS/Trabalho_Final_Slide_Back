@@ -6,7 +6,8 @@ import Joi from "joi";
 const schema = Joi.object({
   produtoId: Joi.number().integer().required(),
   quantidade: Joi.number().integer().min(1).required(),
-});
+}).prefs({ convert: true });
+
 
 const idSchema = Joi.object({
   id: Joi.number().integer().required(),
@@ -69,13 +70,20 @@ const CarrinhoController = {
   addItem: async (req, res) => {
     try {
       const { error, value } = schema.validate(req.body);
-      if (error) return res.status(400).json({ success: false, message: error.details[0].message });
+      
+      if (error)
+        return res
+          .status(400)
+          .json({ success: false, message: error.details[0].message });
 
       const { produtoId, quantidade } = value;
       const usuarioId = req.user.id;
 
       const produto = await Produtos.findByPk(produtoId);
-      if (!produto) return res.status(404).json({ success: false, message: "Produto não encontrado" });
+      if (!produto)
+        return res
+          .status(404)
+          .json({ success: false, message: "Produto não encontrado" });
 
       const carrinho = await CarrinhoController._getOrCreate(usuarioId);
 
@@ -86,12 +94,16 @@ const CarrinhoController = {
       if (item) {
         const novaQuantidade = item.quantidade + quantidade;
         if (produto.storage < novaQuantidade) {
-          return res.status(400).json({ success: false, message: "Estoque insuficiente" });
+          return res
+            .status(400)
+            .json({ success: false, message: "Estoque insuficiente" });
         }
         await item.update({ quantidade: novaQuantidade });
       } else {
         if (produto.storage < quantidade) {
-          return res.status(400).json({ success: false, message: "Estoque insuficiente" });
+          return res
+            .status(400)
+            .json({ success: false, message: "Estoque insuficiente" });
         }
         item = await CarrinhoItem.create({
           carrinhoId: carrinho.id,
@@ -100,30 +112,42 @@ const CarrinhoController = {
         });
       }
 
-      res.status(201).json({ success: true, message: "Item adicionado!", data: item });
+      res
+        .status(201)
+        .json({ success: true, message: "Item adicionado!", data: item });
     } catch (error) {
-      res.status(500).json({ error: error.message });
+      res.status(500).json({ success: false, error: error.message });
     }
   },
 
   updateQuantidade: async (req, res) => {
     try {
-      const { error: idErr } = idSchema.validate(req.params);
+      const { error: idErr } = idSchema.validate({ id: Number(req.params.id) });
       const { error, value } = schema.validate(req.body);
-      if (idErr || error) return res.status(400).json({ success: false, message: "Dados inválidos" });
+      if (idErr || error)
+        return res
+          .status(400)
+          .json({ success: false, message: "Dados inválidos" });
 
       const item = await CarrinhoItem.findByPk(req.params.id, {
         include: [{ model: Produtos, as: "produto" }],
       });
 
-      if (!item) return res.status(404).json({ success: false, message: "Item não encontrado" });
+      if (!item)
+        return res
+          .status(404)
+          .json({ success: false, message: "Item não encontrado" });
 
       if (item.produto.storage < value.quantidade) {
-        return res.status(400).json({ success: false, message: "Estoque insuficiente" });
+        return res
+          .status(400)
+          .json({ success: false, message: "Estoque insuficiente" });
       }
 
       await item.update({ quantidade: value.quantidade });
-      res.status(200).json({ success: true, message: "Quantidade atualizada!" });
+      res
+        .status(200)
+        .json({ success: true, message: "Quantidade atualizada!" });
     } catch (error) {
       res.status(500).json({ error: error.message });
     }
@@ -132,10 +156,16 @@ const CarrinhoController = {
   deleteItem: async (req, res) => {
     try {
       const { error } = idSchema.validate(req.params);
-      if (error) return res.status(400).json({ success: false, message: "ID inválido" });
+      if (error)
+        return res.status(400).json({ success: false, message: "ID inválido" });
 
-      const deletado = await CarrinhoItem.destroy({ where: { id: req.params.id } });
-      if (!deletado) return res.status(404).json({ success: false, message: "Item não encontrado" });
+      const deletado = await CarrinhoItem.destroy({
+        where: { id: req.params.id },
+      });
+      if (!deletado)
+        return res
+          .status(404)
+          .json({ success: false, message: "Item não encontrado" });
 
       res.status(200).json({ success: true, message: "Item removido!" });
     } catch (error) {
@@ -145,7 +175,9 @@ const CarrinhoController = {
 
   limpar: async (req, res) => {
     try {
-      const carrinho = await Carrinho.findOne({ where: { usuarioId: req.user.id, status: "aberto" } });
+      const carrinho = await Carrinho.findOne({
+        where: { usuarioId: req.user.id, status: "aberto" },
+      });
       if (carrinho) {
         await CarrinhoItem.destroy({ where: { carrinhoId: carrinho.id } });
       }

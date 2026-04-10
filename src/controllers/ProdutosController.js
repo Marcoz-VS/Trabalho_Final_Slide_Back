@@ -11,11 +11,13 @@ const schema = Joi.object({
 });
 
 const querySchema = Joi.object({
+  q: Joi.string().allow(''),
   marca: Joi.number().integer(),
   minPrice: Joi.number().min(0),
   maxPrice: Joi.number().min(0),
   order: Joi.string().valid('asc', 'desc').default('asc')
-});
+}).unknown();
+
 
 const idSchema = Joi.object({
   id: Joi.number().integer().required()
@@ -27,8 +29,12 @@ const productController = {
       const { error, value } = querySchema.validate(req.query);
       if (error) return res.status(400).json({ success: false, message: "Filtros inválidos" });
 
-      const { marca, minPrice, maxPrice, order } = value;
+      const { q, marca, minPrice, maxPrice, order } = value;
       const where = {};
+
+      if (q) {
+        where.name = { [Op.like]: `%${q}%` };
+      }
       
       if (marca) where.marcaId = marca;
       if (minPrice || maxPrice) {
