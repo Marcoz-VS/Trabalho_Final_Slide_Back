@@ -52,19 +52,53 @@ const productController = {
     }
   },
 
-  getById: async (req, res) => {
-    try {
-      const { error } = idSchema.validate(req.params);
-      if (error) return res.status(400).json({ success: false, message: "ID inválido" });
+getById: async (req, res) => {
+  try {
+    const { error } = idSchema.validate(req.params);
 
-      const resultado = await Produtos.findByPk(req.params.id);
-      if (!resultado) return res.status(404).json({ success: false, message: "Produto não encontrado" });
-
-      res.status(200).json({ success: true, data: resultado });
-    } catch (error) {
-      res.status(500).json({ error: error.message });
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: "ID inválido"
+      });
     }
-  },
+
+    const resultado = await Produtos.findByPk(req.params.id, {
+      include: [
+        {
+          association: "marca"
+        },
+        {
+          association: "review",
+          include: [
+            {
+              association: "usuario",
+              attributes: ["id", "name"]
+            }
+          ]
+        }
+      ]
+    });
+
+    if (!resultado) {
+      return res.status(404).json({
+        success: false,
+        message: "Produto não encontrado"
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      data: resultado
+    });
+
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error.message
+    });
+  }
+},
 
   create: async (req, res) => {
     try {
