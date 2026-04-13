@@ -3,7 +3,7 @@ import Joi from "joi";
 
 const schema = Joi.object({
   rate: Joi.number().min(1).max(5).required(),
-  comments: Joi.string().min(5).max(500).trim().required(),
+  comments: Joi.string().max(500).trim().allow(""),
   produtoId: Joi.number().integer(),
 });
 
